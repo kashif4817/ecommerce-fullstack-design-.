@@ -1,9 +1,12 @@
-import React from 'react'
+import ProductCatalogPage from "./catalog/page";
 
-const page = () => {
-  return (
-    <div>page</div>
-  )
+// import CatalogPage from "./CatalogPage";
+ProductCatalogPage
+
+export const metadata = {
+  title: "Product Catalog",
+};
+
+export default function Page() {
+  return <ProductCatalogPage />;
 }
-
-export default page
