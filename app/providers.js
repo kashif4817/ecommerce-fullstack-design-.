@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { CartProvider } from "@/context/CartContext";
+import { AuthProvider } from "@/context/AuthContext";
+import { Toaster } from "sonner";
 
 
 export default function Providers({ children }) {
@@ -18,9 +20,12 @@ export default function Providers({ children }) {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <CartProvider>
-        {children}
-      </CartProvider>
+      <AuthProvider>
+        <CartProvider>
+          {children}
+          <Toaster richColors position="top-right" closeButton />
+        </CartProvider>
+      </AuthProvider>
     </QueryClientProvider>
   );
 }

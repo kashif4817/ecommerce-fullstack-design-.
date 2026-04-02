@@ -199,7 +199,7 @@ export default function BrowseCategoryPage() {
           </nav>
 
           {/* ── Page title ── */}
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <h1 className="text-xl font-bold text-gray-900 capitalize">{pageTitle}</h1>
               {!isLoadingProducts && (
@@ -225,10 +225,39 @@ export default function BrowseCategoryPage() {
             </div>
           </div>
 
-          <div className="flex gap-5 items-start">
+          <div className="flex flex-col lg:flex-row gap-5 items-start">
+
+            <div className="lg:hidden w-full overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+              <div className="flex gap-2 pb-1">
+                <button
+                  onClick={() => setActiveCatId(null)}
+                  className={`shrink-0 rounded-full px-3 py-2 text-sm font-medium transition-colors ${
+                    !activeCatId
+                      ? "bg-blue-600 text-white"
+                      : "bg-white border border-gray-200 text-gray-600"
+                  }`}
+                >
+                  All {pageTitle}
+                </button>
+
+                {categoryTree?.children?.map(child => (
+                  <button
+                    key={child.id}
+                    onClick={() => setActiveCatId(child.id)}
+                    className={`shrink-0 rounded-full px-3 py-2 text-sm font-medium transition-colors ${
+                      activeCatId === child.id
+                        ? "bg-blue-600 text-white"
+                        : "bg-white border border-gray-200 text-gray-600"
+                    }`}
+                  >
+                    {child.name}
+                  </button>
+                ))}
+              </div>
+            </div>
 
             {/* ── Sidebar: sub-categories ── */}
-            <aside className="w-52 shrink-0 bg-white rounded-xl border border-gray-200 overflow-hidden">
+            <aside className="hidden lg:block w-52 shrink-0 bg-white rounded-xl border border-gray-200 overflow-hidden">
               <div className="px-4 py-3 border-b border-gray-100">
                 <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
                   Category
@@ -272,7 +301,7 @@ export default function BrowseCategoryPage() {
             </aside>
 
             {/* ── Product Grid ── */}
-            <div className="flex-1 min-w-0">
+            <div className="flex-1 min-w-0 w-full">
               {isLoadingProducts ? (
                 <GridSkeleton />
               ) : products.length === 0 ? (

@@ -25,17 +25,17 @@ const ExtraServices = () => {
   ];
 
   return (
-    <section className="py-8 bg-gray-50">
-      <div className="max-w-[1180px] mx-auto px-4">
-        <h2 className="text-2xl font-bold text-gray-900 mb-6">Our extra services</h2>
-        <div className="grid grid-cols-4 gap-4">
+    <section className="py-6 sm:py-8 bg-gray-50">
+      <div className="max-w-[1180px] mx-auto px-3 sm:px-4">
+        <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4 sm:mb-6">Our extra services</h2>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
           {services.map((service, index) => (
             <div
               key={index}
-              className="relative bg-white rounded-xl overflow-visible shadow-sm hover:shadow-md transition-shadow cursor-pointer group border border-gray-100"
+              className="relative bg-white rounded-lg sm:rounded-xl overflow-visible shadow-sm hover:shadow-md transition-shadow cursor-pointer group border border-gray-100"
             >
               {/* Service Image — NO overflow-hidden */}
-              <div className="relative h-[145px] rounded-t-xl overflow-hidden">
+              <div className="relative h-[100px] sm:h-[145px] rounded-t-lg sm:rounded-t-xl overflow-hidden">
                 <img
                   src={service.image}
                   alt={service.title}
@@ -44,13 +44,13 @@ const ExtraServices = () => {
               </div>
 
               {/* Icon Badge — OUTSIDE image div, positioned relative to card */}
-              <div className="absolute bottom-[58px] right-4 w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center shadow-sm z-20">
-                <service.icon className="w-5 h-5 text-gray-700" />
+              <div className="absolute bottom-[42px] sm:bottom-[58px] right-2 sm:right-4 w-9 sm:w-12 h-9 sm:h-12 bg-blue-100 rounded-full flex items-center justify-center shadow-sm z-20">
+                <service.icon className="w-4 sm:w-5 h-4 sm:h-5 text-gray-700" />
               </div>
 
               {/* Service Title */}
-              <div className="pt-6 pb-3 px-4">
-                <h3 className="text-sm font-semibold text-gray-900 leading-snug whitespace-pre-line">
+              <div className="pt-4 sm:pt-6 pb-2 sm:pb-3 px-3 sm:px-4">
+                <h3 className="text-xs sm:text-sm font-semibold text-gray-900 leading-snug whitespace-pre-line">
                   {service.title}
                 </h3>
               </div>

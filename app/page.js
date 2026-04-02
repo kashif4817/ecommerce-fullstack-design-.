@@ -22,7 +22,7 @@ export default function Home() {
       <Navbar />
       <CategoryBar />
 
-      <main className="flex flex-col items-center gap-6 py-6">
+      <main className="flex flex-col items-center gap-4 sm:gap-6 py-4 sm:py-6">
         <MainSection />
         <DealSection />
         <ConsumerElectronicsSection />
