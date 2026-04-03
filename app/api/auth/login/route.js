@@ -1,91 +1,65 @@
 import { NextResponse } from 'next/server';
-import {
-  buildAuthCookie,
-  isValidEmail,
-  normalizeEmail,
-  signAuthToken,
-} from '@/lib/auth';
-import { createSupabaseServerClient } from '@/lib/supabaseServer';
-
-export const runtime = 'nodejs';
-
-function getSupabaseErrorMessage(error) {
-  if (error?.code === 'PGRST202') {
-    return 'Run supabase/users_auth_setup.sql in your Supabase SQL editor first.';
-  }
-
-  return error?.message || 'Unable to sign you in right now.';
-}
+import { verifyPassword, getUserFromDatabase, createJWT, formatUserResponse } from '@/lib/auth';
 
 export async function POST(request) {
-  let body = {};
-
   try {
-    body = await request.json();
-  } catch {
-    body = {};
-  }
+    const { email, password, rememberMe } = await request.json();
 
-  const email = normalizeEmail(body?.email);
-  const password = String(body?.password || '');
-  const rememberMe = Boolean(body?.rememberMe);
+    // Validation
+    if (!email || !password) {
+      return NextResponse.json(
+        { message: 'Email and password are required' },
+        { status: 400 }
+      );
+    }
 
-  if (!isValidEmail(email)) {
-    return NextResponse.json(
-      { success: false, error: 'Enter a valid email address.' },
-      { status: 400 }
+    // Get user from database
+    const user = await getUserFromDatabase(email);
+    if (!user) {
+      return NextResponse.json(
+        { message: 'Invalid email or password' },
+        { status: 401 }
+      );
+    }
+
+    // Verify password
+    const isPasswordValid = await verifyPassword(password, user.password_hash);
+    if (!isPasswordValid) {
+      return NextResponse.json(
+        { message: 'Invalid email or password' },
+        { status: 401 }
+      );
+    }
+
+    // Create JWT token
+    const token = await createJWT(user);
+
+    // Set cookie (7 days or 24 hours based on rememberMe)
+    const maxAge = rememberMe ? 7 * 24 * 60 * 60 : 24 * 60 * 60;
+
+    const response = NextResponse.json(
+      {
+        message: 'Login successful',
+        user: formatUserResponse(user),
+      },
+      { status: 200 }
     );
-  }
 
-  if (!password) {
-    return NextResponse.json(
-      { success: false, error: 'Password is required.' },
-      { status: 400 }
-    );
-  }
-
-  let supabase;
-
-  try {
-    supabase = createSupabaseServerClient();
-  } catch (error) {
-    return NextResponse.json(
-      { success: false, error: error.message },
-      { status: 500 }
-    );
-  }
-
-  const { data, error } = await supabase.rpc('login_app_user', {
-    email_input: email,
-    password_input: password,
-  });
-
-  if (error) {
-    return NextResponse.json(
-      { success: false, error: getSupabaseErrorMessage(error) },
-      { status: 500 }
-    );
-  }
-
-  const user = Array.isArray(data) ? data[0] : data;
-
-  if (!user) {
-    return NextResponse.json(
-      { success: false, error: 'Invalid email or password.' },
-      { status: 401 }
-    );
-  }
-
-  try {
-    const session = await signAuthToken(user, { rememberMe });
-    const response = NextResponse.json({ success: true, user: session.user });
-
-    response.cookies.set(buildAuthCookie(session.token, rememberMe));
+    response.cookies.set({
+      name: 'authToken',
+      value: token,
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge,
+      path: '/',
+    });
 
     return response;
   } catch (error) {
+    console.error('Login error:', error);
     return NextResponse.json(
-      { success: false, error: error.message },
+      { message: error.message || 'Login failed' },
       { status: 500 }
     );
   }

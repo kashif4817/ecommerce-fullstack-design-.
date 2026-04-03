@@ -23,7 +23,23 @@ export default function Providers({ children }) {
       <AuthProvider>
         <CartProvider>
           {children}
-          <Toaster richColors position="top-right" closeButton />
+          <Toaster
+            richColors
+            closeButton
+            expand
+            position="top-right"
+            theme="light"
+            visibleToasts={4}
+            toastOptions={{
+              classNames: {
+                toast: 'border border-slate-200 shadow-lg',
+                title: 'text-sm font-semibold',
+                description: 'text-sm text-slate-500',
+                actionButton: 'bg-blue-500 text-white',
+                cancelButton: 'bg-slate-100 text-slate-700',
+              },
+            }}
+          />
         </CartProvider>
       </AuthProvider>
     </QueryClientProvider>

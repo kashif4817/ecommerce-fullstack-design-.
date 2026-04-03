@@ -1,114 +1,56 @@
 import { NextResponse } from 'next/server';
-import {
-  buildAuthCookie,
-  isValidEmail,
-  normalizeEmail,
-  signAuthToken,
-} from '@/lib/auth';
-import { createSupabaseServerClient } from '@/lib/supabaseServer';
-
-export const runtime = 'nodejs';
-
-function getSignupErrorStatus(error) {
-  if (error?.message?.toLowerCase().includes('already exists')) {
-    return 409;
-  }
-
-  return 500;
-}
-
-function getSignupErrorMessage(error) {
-  if (error?.code === 'PGRST202') {
-    return 'Run supabase/users_auth_setup.sql in your Supabase SQL editor first.';
-  }
-
-  if (error?.message?.toLowerCase().includes('already exists')) {
-    return 'An account with this email already exists.';
-  }
-
-  return error?.message || 'Unable to create your account right now.';
-}
+import { hashPassword, createUserInDatabase, getUserFromDatabase } from '@/lib/auth';
 
 export async function POST(request) {
-  let body = {};
-
   try {
-    body = await request.json();
-  } catch {
-    body = {};
-  }
+    const { fullName, email, password } = await request.json();
 
-  const fullName = String(body?.name ?? body?.fullName ?? '').trim();
-  const email = normalizeEmail(body?.email);
-  const password = String(body?.password || '');
+    // Validation
+    if (!fullName || !email || !password) {
+      return NextResponse.json(
+        { message: 'Missing required fields' },
+        { status: 400 }
+      );
+    }
 
-  if (fullName.length < 2) {
+    if (password.length < 6) {
+      return NextResponse.json(
+        { message: 'Password must be at least 6 characters' },
+        { status: 400 }
+      );
+    }
+
+    // Check if user already exists
+    const existingUser = await getUserFromDatabase(email);
+    if (existingUser) {
+      return NextResponse.json(
+        { message: 'Email already registered' },
+        { status: 409 }
+      );
+    }
+
+    // Hash password
+    const passwordHash = await hashPassword(password);
+
+    // Create user in database
+    const user = await createUserInDatabase(email, passwordHash, fullName);
+
     return NextResponse.json(
-      { success: false, error: 'Enter your full name.' },
-      { status: 400 }
-    );
-  }
-
-  if (!isValidEmail(email)) {
-    return NextResponse.json(
-      { success: false, error: 'Enter a valid email address.' },
-      { status: 400 }
-    );
-  }
-
-  if (password.length < 8) {
-    return NextResponse.json(
-      { success: false, error: 'Password must be at least 8 characters.' },
-      { status: 400 }
-    );
-  }
-
-  let supabase;
-
-  try {
-    supabase = createSupabaseServerClient();
-  } catch (error) {
-    return NextResponse.json(
-      { success: false, error: error.message },
-      { status: 500 }
-    );
-  }
-
-  const { data, error } = await supabase.rpc('register_app_user', {
-    full_name_input: fullName,
-    email_input: email,
-    password_input: password,
-  });
-
-  if (error) {
-    return NextResponse.json(
-      { success: false, error: getSignupErrorMessage(error) },
-      { status: getSignupErrorStatus(error) }
-    );
-  }
-
-  const user = Array.isArray(data) ? data[0] : data;
-
-  if (!user) {
-    return NextResponse.json(
-      { success: false, error: 'Unable to create your account right now.' },
-      { status: 500 }
-    );
-  }
-
-  try {
-    const session = await signAuthToken(user);
-    const response = NextResponse.json(
-      { success: true, user: session.user },
+      {
+        message: 'Account created successfully',
+        user: {
+          id: user.id,
+          email: user.email,
+          full_name: user.full_name,
+          role: user.role,
+        },
+      },
       { status: 201 }
     );
-
-    response.cookies.set(buildAuthCookie(session.token));
-
-    return response;
-  } catch (signError) {
+  } catch (error) {
+    console.error('Signup error:', error);
     return NextResponse.json(
-      { success: false, error: signError.message },
+      { message: error.message || 'Signup failed' },
       { status: 500 }
     );
   }

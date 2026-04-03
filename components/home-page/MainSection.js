@@ -1,13 +1,20 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { ChevronRight } from "lucide-react";
+import useAuth from "@/hooks/useAuth";
 import { supabase } from "@/lib/supabase";
 
 const MainSection = () => {
+  const { user, isLoading } = useAuth();
   const [categories, setCategories] = useState([]);
   const [loading,    setLoading]    = useState(true);
+  const displayName =
+    user?.fullName?.trim() || user?.email?.split("@")[0] || "friend";
+  const firstName = displayName.split(" ")[0] || "friend";
+  const userInitial = (displayName.charAt(0) || "U").toUpperCase();
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -46,9 +53,12 @@ const MainSection = () => {
               </Link>
             </div>
 
-            <img
+            <Image
               src="https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=500&h=400&fit=crop"
               alt="Electronic items"
+              width={115}
+              height={140}
+              sizes="115px"
               className="h-[140px] w-[115px] object-cover object-left rounded-bl-[42px] rounded-tl-[18px] rounded-r-xl shadow-lg"
             />
           </div>
@@ -103,11 +113,15 @@ const MainSection = () => {
               Learn more
             </Link>
           </div>
-          <img
-            src="https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=500&h=400&fit=crop"
-            alt="Electronic items"
-            className="absolute right-0 top-0 h-full w-[55%] object-cover hidden sm:block"
-          />
+          <div className="absolute right-0 top-0 hidden h-full w-[55%] sm:block">
+            <Image
+              src="https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=500&h=400&fit=crop"
+              alt="Electronic items"
+              fill
+              sizes="(max-width: 1024px) 45vw, 35vw"
+              className="object-cover"
+            />
+          </div>
         </div>
 
         {/* ── Right Side — User + Promo cards ── */}
@@ -115,27 +129,68 @@ const MainSection = () => {
 
           {/* User card */}
           <div className="flex-1 lg:flex-none bg-white border border-[#DEE2E7] rounded-xl lg:rounded-none p-2 sm:p-4 flex flex-col gap-2 sm:gap-3">
-            <div className="flex items-center gap-2">
-              <div className="w-8 sm:w-9 h-8 sm:h-9 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center text-white text-xs sm:text-sm font-bold shrink-0">
-                S
-              </div>
-              <div className="min-w-0">
-                <p className="text-xs sm:text-sm font-semibold text-gray-900 leading-tight truncate">Hi, user</p>
-                <p className="text-xs text-gray-400 leading-tight">let&apos;s get started</p>
-              </div>
-            </div>
-            <Link
-              href="/signup"
-              className="w-full bg-blue-500 hover:bg-blue-600 text-white text-xs sm:text-sm py-1 sm:py-1.5 rounded transition-colors font-medium text-center"
-            >
-              Join now
-            </Link>
-            <Link
-              href="/login"
-              className="w-full border border-blue-500 text-blue-500 text-xs sm:text-sm py-1 sm:py-1.5 rounded hover:bg-blue-50 transition-colors font-medium text-center"
-            >
-              Log in
-            </Link>
+            {isLoading ? (
+              <>
+                <div className="flex items-center gap-2">
+                  <div className="h-8 w-8 sm:h-9 sm:w-9 rounded-full bg-slate-200 animate-pulse shrink-0" />
+                  <div className="min-w-0 flex-1 space-y-1">
+                    <div className="h-3 w-20 rounded bg-slate-200 animate-pulse" />
+                    <div className="h-2.5 w-24 rounded bg-slate-100 animate-pulse" />
+                  </div>
+                </div>
+                <div className="h-8 rounded bg-slate-200 animate-pulse" />
+                <div className="h-8 rounded bg-slate-100 animate-pulse" />
+              </>
+            ) : user ? (
+              <>
+                <div className="flex items-center gap-2">
+                  <div className="w-8 sm:w-9 h-8 sm:h-9 rounded-full bg-gradient-to-br from-emerald-400 to-blue-500 flex items-center justify-center text-white text-xs sm:text-sm font-bold shrink-0">
+                    {userInitial}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-xs sm:text-sm font-semibold text-gray-900 leading-tight truncate">
+                      Hi, {firstName}
+                    </p>
+                    <p className="text-xs text-gray-400 leading-tight truncate">
+                      {user.email}
+                    </p>
+                  </div>
+                </div>
+                <p className="rounded-lg bg-blue-50 px-2.5 py-2 text-[11px] sm:text-xs text-blue-700 leading-snug">
+                  You&apos;re signed in and ready to browse suppliers, compare offers, and keep shopping.
+                </p>
+                <Link
+                  href="/products"
+                  className="w-full bg-blue-500 hover:bg-blue-600 text-white text-xs sm:text-sm py-1 sm:py-1.5 rounded transition-colors font-medium text-center"
+                >
+                  Continue shopping
+                </Link>
+              </>
+            ) : (
+              <>
+                <div className="flex items-center gap-2">
+                  <div className="w-8 sm:w-9 h-8 sm:h-9 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center text-white text-xs sm:text-sm font-bold shrink-0">
+                    S
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-xs sm:text-sm font-semibold text-gray-900 leading-tight truncate">Hi, user</p>
+                    <p className="text-xs text-gray-400 leading-tight">let&apos;s get started</p>
+                  </div>
+                </div>
+                <Link
+                  href="/signup"
+                  className="w-full bg-blue-500 hover:bg-blue-600 text-white text-xs sm:text-sm py-1 sm:py-1.5 rounded transition-colors font-medium text-center"
+                >
+                  Join now
+                </Link>
+                <Link
+                  href="/login"
+                  className="w-full border border-blue-500 text-blue-500 text-xs sm:text-sm py-1 sm:py-1.5 rounded hover:bg-blue-50 transition-colors font-medium text-center"
+                >
+                  Log in
+                </Link>
+              </>
+            )}
           </div>
 
           {/* Orange promo */}

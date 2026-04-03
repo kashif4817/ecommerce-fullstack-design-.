@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import useAuth from "@/hooks/useAuth";
 import {
   LayoutDashboard,
   Package,
@@ -47,7 +48,29 @@ export default function AdminLayout({ children }) {
 
   const router   = useRouter();
   const pathname = usePathname();
+  const { user, isLoading } = useAuth();
   const isUnlockRoute = pathname === "/admin/unlock";
+
+  // Protect admin routes - redirect if not admin
+  useEffect(() => {
+    if (!isLoading && (!user || user.role !== 'admin')) {
+      router.push('/login');
+    }
+  }, [user, isLoading, router]);
+
+  // Show loading state while checking auth
+  if (isLoading) {
+    return (
+      <div className="flex h-screen items-center justify-center bg-zinc-900">
+        <div className="text-white">Loading...</div>
+      </div>
+    );
+  }
+
+  // Don't render content if not admin
+  if (!user || user.role !== 'admin') {
+    return null;
+  }
 
   // auto-open parent if a child route is active
   useEffect(() => {
